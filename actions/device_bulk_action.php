@@ -10,10 +10,20 @@ $action = $_POST['action'] ?? '';
 $device_ids = $_POST['device_ids'] ?? [];
 $user_id = $_SESSION['user']['id'];
 
+// Determine where user came from (safe redirect)
+$redirect = '../pages/dashboard.php';
+if (!empty($_SERVER['HTTP_REFERER'])) {
+    $ref = $_SERVER['HTTP_REFERER'];
+    // Only allow redirects within your app
+    if (strpos($ref, BASE_PATH) !== false || str_contains($ref, '/pages/')) {
+        $redirect = $ref;
+    }
+}
+
 if (empty($device_ids)) {
     $_SESSION['message'] = "No devices selected.";
     $_SESSION['message_type'] = "warning";
-    header("Location: ../pages/servers.php");
+    header("Location: $redirect");
     exit;
 }
 
@@ -44,13 +54,13 @@ foreach ($device_ids as $id) {
             list($ok,) = ssh_shutdown($device['os'], $ip, $device['ssh_user'], $device['ssh_pass']);
             if ($ok) {
                 $shut++;
-                record_audit($user_id, $id, "smart_shutdown", "Smart: shutdown executed");
+                record_audit($_SESSION['user']['username'], $id, "smart_shutdown", "Smart: shutdown executed");
             }
         } else {
             // Wake offline
             if (wol_send_magic_packet($device['mac'])) {
                 $woke++;
-                record_audit($user_id, $id, "smart_wake", "Smart: wake executed");
+                record_audit($_SESSION['user']['username'], $id, "smart_wake", "Smart: wake executed");
             }
         }
     }
@@ -59,13 +69,13 @@ foreach ($device_ids as $id) {
     elseif ($action === "wake" && !$is_online) {
         if (wol_send_magic_packet($device['mac'])) {
             $woke++;
-            record_audit($user_id, $id, "bulk_wake", "Wake via bulk");
+            record_audit($_SESSION['user']['username'], $id, "bulk_wake", "Wake via bulk");
         }
     } elseif ($action === "shutdown" && $is_online) {
         list($ok,) = ssh_shutdown($device['os'], $ip, $device['ssh_user'], $device['ssh_pass']);
         if ($ok) {
             $shut++;
-            record_audit($user_id, $id, "bulk_shutdown", "Shutdown via bulk");
+            record_audit($_SESSION['user']['username'], $id, "bulk_shutdown", "Shutdown via bulk");
         }
     }
 }
@@ -79,5 +89,6 @@ if ($action === "smart") {
 
 $_SESSION['message_type'] = ($woke + $shut) > 0 ? "success" : "warning";
 
-header("Location: ../pages/servers.php");
+//Redirect user back to where they came from
+header("Location: $redirect");
 exit;
