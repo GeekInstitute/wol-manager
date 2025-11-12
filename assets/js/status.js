@@ -56,5 +56,5 @@ async function refreshStatus() {
     }
 }
 
-setInterval(refreshStatus, 4000);
+setInterval(refreshStatus, 8000);
 document.addEventListener("DOMContentLoaded", refreshStatus);
