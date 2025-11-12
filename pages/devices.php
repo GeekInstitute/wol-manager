@@ -7,7 +7,7 @@ include "../layouts/header.php";
 $uid = $_SESSION['user']['id'];
 
 /* Pagination setup */
-$limit = 50; // devices per page
+$limit = 50;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
@@ -41,13 +41,18 @@ $result = db_query($query, $params, $types)->get_result();
 $totalPages = ceil($total / $limit);
 ?>
 
-<div class="d-flex align-items-center mb-3">
+<div class="d-flex align-items-center justify-content-between mb-3">
     <h3 class="me-auto"><i class="bi bi-hdd-stack"></i> Devices</h3>
 
     <?php if (is_admin()): ?>
-        <a class="btn btn-primary" href="<?= BASE_PATH ?>/pages/device_form.php">
-            <i class="bi bi-plus-circle"></i> Add Device
-        </a>
+        <div class="btn-group">
+            <a class="btn btn-primary" href="<?= BASE_PATH ?>/pages/device_form.php">
+                <i class="bi bi-plus-circle"></i> Add Device
+            </a>
+            <button type="submit" form="bulkActionForm" id="deleteSelectedBtn" class="btn btn-danger" disabled onclick="setBulkAction('delete')">
+                <i class="bi bi-trash"></i> Delete Selected
+            </button>
+        </div>
     <?php endif; ?>
 </div>
 
@@ -55,7 +60,7 @@ $totalPages = ceil($total / $limit);
 <input type="text" id="searchDevice" class="form-control mb-3"
        placeholder="Search devices by name / IP / MAC / OS / Type...">
 
-<form id="bulkActionForm" method="post" onsubmit="return confirmAction(event)">
+<form id="bulkActionForm" method="post" action="<?= BASE_PATH ?>/actions/device_bulk_delete.php" onsubmit="return confirmAction(event)">
     <input type="hidden" name="csrf" value="<?= csrf_token() ?>">
     <input type="hidden" name="action" id="bulkAction" value="">
 
@@ -63,7 +68,7 @@ $totalPages = ceil($total / $limit);
         <table class="table table-hover align-middle" id="devicesTable">
             <thead class="table-dark">
                 <tr>
-                    <th><input type="checkbox" id="selectAll"></th>
+                    <th style="width:40px;"><input type="checkbox" id="selectAll"></th>
                     <th>Name</th>
                     <th>Type</th>
                     <th>OS</th>
@@ -145,12 +150,50 @@ $totalPages = ceil($total / $limit);
 <script src="<?= BASE_PATH ?>/assets/js/status.js"></script>
 
 <script>
+// Search filter
 document.getElementById("searchDevice").addEventListener("keyup", function () {
     const filter = this.value.toLowerCase();
     document.querySelectorAll("#devicesTable tbody tr").forEach(row =>
         row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none"
     );
 });
+
+// Select all
+const selectAll = document.getElementById("selectAll");
+const checkboxes = document.querySelectorAll(".deviceCheckbox");
+const deleteBtn = document.getElementById("deleteSelectedBtn");
+
+selectAll.addEventListener("change", function() {
+    checkboxes.forEach(chk => chk.checked = this.checked);
+    toggleDeleteButton();
+});
+
+checkboxes.forEach(chk => chk.addEventListener("change", toggleDeleteButton));
+
+function toggleDeleteButton() {
+    const anyChecked = document.querySelectorAll(".deviceCheckbox:checked").length > 0;
+    deleteBtn.disabled = !anyChecked;
+    deleteBtn.classList.toggle("disabled", !anyChecked);
+}
+
+// Set bulk action
+function setBulkAction(action) {
+    document.getElementById("bulkAction").value = action;
+}
+
+// Confirm bulk delete
+function confirmAction(e) {
+    if (document.getElementById("bulkAction").value === "delete") {
+        const count = document.querySelectorAll(".deviceCheckbox:checked").length;
+        if (count === 0) {
+            alert("Please select at least one device to delete.");
+            e.preventDefault();
+            return false;
+        }
+        return confirm(`Are you sure you want to delete ${count} device(s)?`);
+    }
+    return true;
+}
 </script>
 
 <?php include "../layouts/footer.php"; ?>
