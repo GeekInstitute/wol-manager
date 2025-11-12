@@ -94,10 +94,6 @@ CREATE TABLE `user_devices` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Indexes for dumped tables
---
-
---
 -- Indexes for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
@@ -133,10 +129,6 @@ ALTER TABLE `user_devices`
   ADD KEY `device_id` (`device_id`);
 
 --
--- AUTO_INCREMENT for dumped tables
---
-
---
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
@@ -165,10 +157,6 @@ ALTER TABLE `users`
 --
 ALTER TABLE `user_devices`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- Constraints for dumped tables
---
 
 --
 -- Constraints for table `audit_logs`

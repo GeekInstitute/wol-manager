@@ -1,60 +1,71 @@
 async function refreshStatus() {
-    try {
-        const url = `${BASE_PATH}/api/status.php?ts=${Date.now()}`;
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  try {
+    const url = `${BASE_PATH}/api/status.php?ts=${Date.now()}`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const devices = await res.json();
+    const devices = await res.json();
+    let anyOnline = false, anyOffline = false;
 
-        let anyOnline = false;
-        let anyOffline = false;
+    devices.forEach(d => {
+      // Dashboard + device badges
+      const pingContainer = document.querySelectorAll(`[data-device="${d.id}"]`);
+      pingContainer.forEach(container => {
+        const badge = container.querySelector(".badge");
+        if (badge) {
+          badge.className = `badge ${d.online ? "bg-success" : "bg-danger"}`;
+          badge.textContent = d.online ? "Online" : "Offline";
+        }
+      });
 
-        devices.forEach(d => {
-            const pingBadge  = document.querySelector(`[data-device="${d.id}"] .badge`);
-            const sshBadge   = document.querySelector(`[data-ssh="${d.id}"] .badge`);
-            const wakeBtn    = document.querySelector(`[data-wake="${d.id}"]`);
-            const shutBtn    = document.querySelector(`[data-shutdown="${d.id}"]`);
-            const consoleBtn = document.querySelector(`[data-console="${d.id}"]`);
+      // SSH badge (only on detailed pages)
+      const sshContainer = document.querySelector(`[data-ssh="${d.id}"]`);
+      if (sshContainer) {
+        const badge = sshContainer.querySelector(".badge");
+        badge.className = `badge ${d.ssh ? "bg-primary" : "bg-secondary"}`;
+        badge.textContent = d.ssh ? "SSH" : "No SSH";
+      }
 
-            if (!pingBadge || !sshBadge) return;
+      // Update wake/shutdown/console buttons
+      const wakeBtn = document.querySelector(`[data-wake="${d.id}"]`);
+      const shutBtn = document.querySelector(`[data-shutdown="${d.id}"]`);
+      const consoleBtn = document.querySelector(`[data-console="${d.id}"]`);
 
-            // Status badges update
-            pingBadge.className = `badge ${d.online ? "bg-success" : "bg-danger"}`;
-            pingBadge.textContent = d.online ? "Online" : "Offline";
+      if (d.online) anyOnline = true; else anyOffline = true;
 
-            sshBadge.className  = `badge ${d.ssh ? "bg-primary" : "bg-secondary"}`;
-            sshBadge.textContent = d.ssh ? "SSH" : "No SSH";
+      if (wakeBtn) {
+        wakeBtn.disabled = d.online;
+        wakeBtn.classList.toggle("disabled", d.online);
+      }
 
-            // Determine global button state
-            if (d.online) anyOnline = true;
-            else anyOffline = true;
+      if (shutBtn) {
+        shutBtn.disabled = !d.online;
+        shutBtn.classList.toggle("disabled", !d.online);
+      }
 
-            // Wake button (offline only)
-            if (wakeBtn) {
-                wakeBtn.classList.toggle("disabled", d.online);
-            }
+      if (consoleBtn) {
+        const enable = d.online && d.ssh;
+        consoleBtn.disabled = !enable;
+        consoleBtn.classList.toggle("disabled", !enable);
+      }
+    });
 
-            // Shutdown button (online only)
-            if (shutBtn) {
-                shutBtn.classList.toggle("disabled", !d.online);
-            }
-
-            // Console button (online + ssh)
-            if (consoleBtn) {
-                const enable = d.online && d.ssh;
-                consoleBtn.classList.toggle("disabled", !enable);
-                consoleBtn.setAttribute("aria-disabled", enable ? "false" : "true");
-            }
-        });
-
-        // Enable/Disable Wake All / Shutdown All
-        document.querySelector("[data-wake-all]")?.classList.toggle("disabled", !anyOffline);
-        document.querySelector("[data-shutdown-all]")?.classList.toggle("disabled", !anyOnline);
-
-    } catch (err) {
-        console.error("Status fetch failed:", err);
+    // Wake All / Shutdown All
+    const wakeAllBtn = document.querySelector("[data-wake-all]");
+    const shutAllBtn = document.querySelector("[data-shutdown-all]");
+    if (wakeAllBtn) {
+      wakeAllBtn.disabled = !anyOffline;
+      wakeAllBtn.classList.toggle("disabled", !anyOffline);
     }
+    if (shutAllBtn) {
+      shutAllBtn.disabled = !anyOnline;
+      shutAllBtn.classList.toggle("disabled", !anyOnline);
+    }
+
+  } catch (err) {
+    console.error("Status fetch failed:", err);
+  }
 }
 
-setInterval(refreshStatus, 8000);
+setInterval(refreshStatus, 5000);
 document.addEventListener("DOMContentLoaded", refreshStatus);
