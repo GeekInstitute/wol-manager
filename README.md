@@ -149,6 +149,7 @@ php reset_admin.php
   <img src="thumbnails/3.png" alt="Preview 3" width="48%">
   <img src="thumbnails/4.png" alt="Preview 4" width="48%"><br><br>
   <img src="thumbnails/5.png" alt="Preview 5" width="48%">
+  <img src="thumbnails/6.png" alt="Preview 6" width="48%">
 </p>
 
 ---
