@@ -141,6 +141,18 @@ php reset_admin.php
 
 ---
 
+## 📸 Preview
+
+<p align="center">
+  <img src="thumbnails/1.png" alt="Preview 1" width="48%">
+  <img src="thumbnails/2.png" alt="Preview 2" width="48%"><br><br>
+  <img src="thumbnails/3.png" alt="Preview 3" width="48%">
+  <img src="thumbnails/4.png" alt="Preview 4" width="48%"><br><br>
+  <img src="thumbnails/5.png" alt="Preview 5" width="48%">
+</p>
+
+---
+
 ## 📜 MIT License
 
 ```
